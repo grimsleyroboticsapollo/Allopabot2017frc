@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DigitalOutput;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
@@ -40,8 +41,8 @@ public class Robot extends IterativeRobot {
 	boolean LastForklift = false;
 	boolean desiredEncoder = false;
 	//The joysticks and their respective USB ports on the driver station
-	Joystick Joystick1 = new Joystick(0);
-	Joystick Joystick2 = new Joystick(1);
+	Joystick Joystick1 = new Joystick(1);
+	Joystick Joystick2 = new Joystick(0);
 	final String defaultAuto = "Default";
 	final String autoLeft = "left goal";
 	final String autoCenter = "center goal";
@@ -51,12 +52,9 @@ public class Robot extends IterativeRobot {
 	SpeedController driveLeft2 = new Victor(1);
 	SpeedController driveRight1 = new Victor(2);
 	SpeedController driveRight2 = new Victor(3);
-	SpeedController ClimberLeft = new Victor(4);
-	SpeedController ClimberRight = new Victor(5);
-	SpeedController ForkliftMotor = new Victor(6);
-	Encoder ForkliftEncoder = new Encoder(2,3,false,Encoder.EncodingType.k2X);
+	SpeedController Climber = new Victor(4);
+	SpeedController ForkliftMotor = new Victor(5);
 	BuiltInAccelerometer accel = new BuiltInAccelerometer();
-	ADXRS450_Gyro gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0);
 	SendableChooser<String> chooser = new SendableChooser<>();
 	UsbCamera camera;
 	Contours grip = new Contours();
@@ -71,17 +69,23 @@ public class Robot extends IterativeRobot {
 	ArrayList<MatOfPoint> publishableOutput;
 	long setTime = 0;
 	boolean hasTurned = false;
-	DigitalInput climbLimiter = new DigitalInput(2);
-	DigitalInput forkliftUp = new DigitalInput(3);
-	DigitalInput forkliftDown = new DigitalInput(4);
+	DigitalOutput led = new DigitalOutput(2);
+	boolean canSetAngle = true;
+	double angleCheck = 0;
+	boolean goLeft = true;
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
 	 */
 	@Override
 	public void robotInit() {
+		led.set(false);
+		driveRight1.setInverted(false);
+		driveRight2.setInverted(false);
+		driveLeft1.setInverted(true);
+		driveLeft2.setInverted(true);
 		defaultValue = new double[0];
-		ultra = new Ultrasonic(1, 0);
+		ultra = new Ultrasonic(0, 1);
 		ultra.setAutomaticMode(true);
 		imu = BNO055.getInstance(BNO055.opmode_t.OPERATION_MODE_IMUPLUS, BNO055.vector_type_t.VECTOR_EULER);
 		while(!imu.isInitialized());
@@ -146,8 +150,8 @@ public class Robot extends IterativeRobot {
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
 		System.out.println("Auto selected: " + autoSelected);
-    	ForkliftEncoder.reset();
     	setTime = System.currentTimeMillis();
+    	led.set(true);
 	}
 
 	/**
@@ -180,11 +184,11 @@ public class Robot extends IterativeRobot {
 		case autoLeft:
 			// Put custom auto code here
 			if(!hasTurned && System.currentTimeMillis() - setTime > 1000){
-				while(imu.getHeading() < 30){
+				while(imu.getHeading() < 60){
 					driveLeft1.set(.5);
 			        driveLeft2.set(.5);
-			        driveRight1.set(-.5);
-			        driveRight2.set(-.5);
+			        driveRight1.set(0);
+			        driveRight2.set(0);
 				}
 				hasTurned = true;
 			}
@@ -192,9 +196,9 @@ public class Robot extends IterativeRobot {
 		case autoRight:
 			// Put custom auto code here
 			if(!hasTurned && System.currentTimeMillis() - setTime > 1000){
-				while(imu.getHeading() > -30){
-					driveLeft1.set(-.5);
-			        driveLeft2.set(-.5);
+				while(imu.getHeading() > -60){
+					driveLeft1.set(0);
+			        driveLeft2.set(0);
 			        driveRight1.set(.5);
 			        driveRight2.set(.5);
 				}
@@ -204,10 +208,11 @@ public class Robot extends IterativeRobot {
 		case autoCenter:
 			hasTurned = true;
 		case defaultAuto:
-		default:
+	default:
 			// Do Nothing
 			if(System.currentTimeMillis() - setTime < 1000){
 				driveLeft1.set(1);
+				
 		        driveLeft2.set(1);
 		        driveRight1.set(1);
 		        driveRight2.set(1);
@@ -221,48 +226,56 @@ public class Robot extends IterativeRobot {
 		}
 		if(hasTurned){
 			int numberOfContours = contours.length;
-			if(numberOfContours > 0){
-				if(contours[0][0] < 700){
-					if(numberOfContours == 2){
-						double centerX = (contours[0][1] + contours[1][1]) / 2;
-						double driveOff = (Math.abs(centerX - 80)) / 80;
-						if(centerX < 80){
-							driveLeft1.set(1);
-					        driveLeft2.set(1);
-					        driveRight1.set(1 - driveOff);
-					        driveRight2.set(1 - driveOff);
-						} else {
-							driveLeft1.set(1 - driveOff);
-					        driveLeft2.set(1 - driveOff);
-					        driveRight1.set(1);
-					        driveRight2.set(1);
-						}
-					} else if(numberOfContours == 1) {
-						double centerX = contours[0][1];
-						double driveOff = (Math.abs(centerX - 80)) / 80;
-						if(centerX < 80){
-							driveLeft1.set(1);
-					        driveLeft2.set(1);
-					        driveRight1.set(1 - driveOff);
-					        driveRight2.set(1 - driveOff);
-						} else {
-							driveLeft1.set(1 - driveOff);
-					        driveLeft2.set(1 - driveOff);
-					        driveRight1.set(1);
-					        driveRight2.set(1);
-						}
-					} else {
+			if(ultra.getRangeInches() > 4){
+				if(numberOfContours == 2){
+					double centerX = (contours[0][1] + contours[1][1]) / 2;
+					double driveOff = (Math.abs(centerX - 80)) / 80;
+					if(centerX < 80){
 						driveLeft1.set(1);
 				        driveLeft2.set(1);
+				        driveRight1.set(1 - driveOff);
+				        driveRight2.set(1 - driveOff);
+					} else {
+						driveLeft1.set(1 - driveOff);
+				        driveLeft2.set(1 - driveOff);
 				        driveRight1.set(1);
 				        driveRight2.set(1);
 					}
+				} else if(numberOfContours == 1) {
+					if(canSetAngle){
+						angleCheck = imu.getHeading();
+						canSetAngle = false;
+					}
+					if(goLeft){
+						if(imu.getHeading() - angleCheck < 10){
+							driveLeft1.set(-1);
+					        driveLeft2.set(-1);
+					        driveRight1.set(1);
+					        driveRight2.set(1);
+						} else {
+							goLeft = false;
+						}
+					} else {
+						if(imu.getHeading() - angleCheck > -10){
+							driveLeft1.set(1);
+					        driveLeft2.set(1);
+					        driveRight1.set(-1);
+					        driveRight2.set(-1);
+						} else {
+							goLeft = true;
+						}
+					}
 				} else {
-					driveLeft1.set(0);
-			        driveLeft2.set(0);
-			        driveRight1.set(0);
-			        driveRight2.set(0);
+					driveLeft1.set(1);
+			        driveLeft2.set(1);
+			        driveRight1.set(1);
+			        driveRight2.set(1);
 				}
+			} else {
+				driveLeft1.set(0);
+		        driveLeft2.set(0);
+		        driveRight1.set(0);
+		        driveRight2.set(0);
 			}
 			
 			
@@ -298,15 +311,9 @@ public class Robot extends IterativeRobot {
 			 */
 			//I commented this out because it's not useful unless console is needed
 		}
-		if(contours.length > 0){
+		if(contours.length == 2){
 			SmartDashboard.putNumber("Area: ", contours[0][0]);
-			double centerX = 80;
-			if(contours.length == 2){
-				centerX = (contours[0][1] + contours[1][1]) / 2;
-			} else
-			if(contours.length == 1){
-				centerX = contours[0][1];
-			}
+			double centerX = (contours[0][1] + contours[1][1]) / 2;
 			if(centerX < 60){
 				SmartDashboard.putString("Go", "Left");
 			}else if (centerX > 100){
@@ -317,18 +324,23 @@ public class Robot extends IterativeRobot {
 		} else {
 			SmartDashboard.putString("Go", "No Reflections Found!");
 		}
-		double turn = .9 *Joystick1.getRawAxis(6); //right joystick x-axis
-        double speed = .9 * Joystick1.getRawAxis(1); //left joystick y-axis
-        boolean pullForward = Joystick1.getRawButton(5); //left bumper
+		double turn = .9 *Joystick1.getRawAxis(4) * Math.abs(Joystick1.getRawAxis(4)); //right joystick x-axis
+        double speed = .9 * Joystick1.getRawAxis(1) * Math.abs(Joystick1.getRawAxis(1)); //left joystick y-axis
+        boolean slowMode = Joystick1.getRawButton(5); //left bumper
         boolean pullBackward = Joystick1.getRawButton(6); //right bumper
         boolean ShooterOn = Joystick2.getRawButton(2); //B button
         boolean armUp = Joystick2.getRawButton(5); //left bumper
         boolean armDown = Joystick2.getRawButton(6); //right bumper
-        boolean Climber = Joystick1.getRawButton(2); //B button
-        boolean Forklift = Joystick1.getRawButton(1); //A button
-        boolean Break = Joystick1.getRawButton(3); //X button
-        double leftSpeed = speed + turn;
-        double rightSpeed = speed - turn;
+        boolean climber = Joystick1.getRawButton(2); //B button
+        boolean ForkliftUp = Joystick1.getRawButton(1); //A button
+        boolean ForkliftDown = Joystick1.getRawButton(3); //X button
+        boolean idle = Joystick1.getRawButton(4); //Y button
+        double leftSpeed = speed - turn;
+        double rightSpeed = speed + turn;
+        if(slowMode){
+        	leftSpeed = leftSpeed * .3;
+        	rightSpeed = rightSpeed * .3;
+        }
         if (leftSpeed > 1){
         	leftSpeed = 1;
         } else if (leftSpeed < -1){
@@ -343,25 +355,21 @@ public class Robot extends IterativeRobot {
         driveLeft2.set(leftSpeed);
         driveRight1.set(rightSpeed);
         driveRight2.set(rightSpeed);
-        if(Forklift && !LastForklift){
-        	desiredEncoder = !desiredEncoder;
-        }
-        System.out.println(desiredEncoder);
-        if(!desiredEncoder && forkliftDown.get()){
-        	ForkliftMotor.set(1);
-        }else if(desiredEncoder && forkliftUp.get()){
-        	ForkliftMotor.set(-1);
+        if(ForkliftUp){
+        	ForkliftMotor.set(.2);
+        }else if(ForkliftDown){
+        	ForkliftMotor.set(-.2);
         }else{
         	ForkliftMotor.set(0);
         }
-        if(Climber){
-        	ClimberLeft.set(1);
-        	ClimberRight.set(1);
+        
+        if(idle){
+        	Climber.set(.5);
+        }else if(climber){
+        	Climber.set(1);
         }else{
-        	ClimberLeft.set(0);
-        	ClimberRight.set(0);
+        	Climber.set(0);
         }
-        LastForklift = Forklift;
 	}
 
 	/**
