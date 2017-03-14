@@ -454,7 +454,8 @@ public class Robot extends IterativeRobot {
         boolean ForkliftUp = Joystick1.getRawButton(1); //A button
         boolean ForkliftDown = Joystick1.getRawButton(3); //X button
         boolean idle = Joystick1.getRawButton(4); //Y button
-        if(speed < 0){
+        boolean inverse = Joystick1.getRawButton(9); //left joystick button
+        if(speed < 0 && inverse){
         	turn = -turn;
         }
         double leftSpeed = speed - turn;
@@ -490,9 +491,7 @@ public class Robot extends IterativeRobot {
         	ForkliftMotor.set(0);
         }
         
-        if(idle){
-        	Climber.set(-.5);
-        }else if(climber){
+        if(climber){
         	Climber.set(-1);
         }else{
         	Climber.set(0);
@@ -507,34 +506,37 @@ public class Robot extends IterativeRobot {
 		double Heading = imu.getHeading();
 		double targetAngle = 0;
 		double speedMult = 1;
-		if(Heading < targetAngle){
-			slowLeft -= .1;
-		} else if(Heading > targetAngle){
-			slowRight -= .1;
+		if(Heading > targetAngle){
+			slowLeft -= .01;
+		} else if(Heading < targetAngle){
+			slowRight -= .01;
 		}
 		if(slowLeft > slowRight){
-			speedMult = 1 / slowLeft;
+			speedMult = 1 - slowLeft;
 		}else{
-			speedMult = 1 / slowRight;
+			speedMult = 1 - slowRight;
 		}
-		slowLeft = slowLeft * speedMult;
-		slowRight = slowRight * speedMult;
+		slowLeft = slowLeft + speedMult;
+		slowRight = slowRight + speedMult;
 		if(slowLeft > 1){
 			slowLeft = 1;
 		}
 		if(slowRight > 1){
 			slowRight = 1;
 		}
-		if(slowLeft < 0){
-			slowLeft = 0;
+		if(slowLeft <= .5){
+			slowLeft = .5;
 		}
-		if(slowRight < 0){
-			slowRight = 0;
+		if(slowRight <= .5){
+			slowRight = .5;
 		}
-		driveLeft1.set(.3 * slowLeft);
-        driveLeft2.set(.3 * slowLeft);
-        driveRight1.set(.3 * slowRight);
-        driveRight2.set(.3 * slowRight);
+		driveLeft1.set(-.3 * slowLeft);
+        driveLeft2.set(-.3 * slowLeft);
+        driveRight1.set(-.3 * slowRight);
+        driveRight2.set(-.3 * slowRight);
+        System.out.println("slowLeft = " + slowLeft);
+        System.out.println("slowRight = " + slowRight);
+        System.out.println("Heading = " + Heading);
 	}
 }
 
