@@ -89,6 +89,9 @@ public class Robot extends IterativeRobot {
 		ultra.setAutomaticMode(true);
 		imu = BNO055.getInstance(BNO055.opmode_t.OPERATION_MODE_IMUPLUS, BNO055.vector_type_t.VECTOR_EULER);
 		while(!imu.isInitialized());
+		/* #JENS TODO - please consider adding a brief sleep here; might require surrounding of a trivial
+		   try/catch block such as ... { try { Thread.sleep(10); } catch (Exception e) {} }
+		*/
 		cal = imu.getCalibration();
 
 		System.out.println("\tCALIBRATION: Sys=" + cal.sys
@@ -122,6 +125,10 @@ public class Robot extends IterativeRobot {
 				}
 				grip.process(mat);
 				publishableOutput = grip.convexHullsOutput();
+				/* #JENS TODO - please consider adding a brief sleep here, say, for
+				   10 milliseconds or so; otherwise the camera code may seriously grind on the CPU;
+				   just like earlier, something like try { Thread.sleep(10); } catch (Exception e) {}
+				*/
 			}
 		});
 		visionThread.setDaemon(true);
@@ -163,6 +170,10 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("distance", ultra.getRangeInches());
 		SmartDashboard.putNumber("Contours", publishableOutput.size());
 		double[][] contours = new double[publishableOutput.size()][5];
+		/* #JENS TODO - does this consider the case where publishableOutput.size() = 0? I don't know
+		   if this can even happen, however, if it would happen then the previous line could fail.
+		   Please check and/or implement a safeguard.
+		*/
 		for(int i = 0; i < publishableOutput.size(); i++){
 			MatOfPoint thisContour = publishableOutput.get(i);
 			Rect dimen = Imgproc.boundingRect(thisContour);
