@@ -484,9 +484,22 @@ public class Robot extends IterativeRobot {
         driveRight1.set(rightSpeed);
         driveRight2.set(rightSpeed);
         if(ForkliftUp){
+        	if (VTEC) {
+        		ForkliftMotor.set(0.5);
+        	} else if (slowMode) {
+        		ForkliftMotor.set(0.2);
+        	} else {
         	ForkliftMotor.set(.4);
+        	}
         }else if(ForkliftDown){
+        	if (VTEC) {
+        		ForkliftMotor.set(-0.5);
+        	} else if (slowMode) {
+        		ForkliftMotor.set(-0.2);
+        	} else {
         	ForkliftMotor.set(-.4);
+        	}
+        	
         }else{
         	ForkliftMotor.set(0);
         }
