@@ -492,7 +492,13 @@ public class Robot extends IterativeRobot {
         }
         
         if(climber){
-        	Climber.set(-1);
+        	if (VTEC) {
+        		Climber.set(1);
+        	} else if (slowMode) {
+        		Climber.set(0.3);
+        	} else {
+        	   Climber.set(0.6);
+        	}
         }else{
         	Climber.set(0);
         }
