@@ -130,7 +130,14 @@ public class Robot extends IterativeRobot {
 				}
 				grip.process(mat);
 				publishableOutput = grip.convexHullsOutput();
+				try {
+					Thread.sleep(10);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 			}
+		
 		});
 		visionThread.setDaemon(true);
 		visionThread.start();
