@@ -82,6 +82,7 @@ public class Robot extends IterativeRobot {
 	final String turning = "turning";
 	double targetAngle = 0;
 	long headingCheckTime = 0;
+	double lastHeading = 0;
 	/**
 	 * This function is run when the robot is first started up and should be
 	 * used for any initialization code.
@@ -533,12 +534,12 @@ public class Robot extends IterativeRobot {
 		double Heading = imu.getHeading();
 		double targetAngle = 0;
 		double speedMult = 1;
-		if(System.currentTimeMillis() - headingCheckTime > 10){
-			if(Heading > targetAngle){
-				slowLeft -= .0003;
-			} else if(Heading < targetAngle){
-				slowRight -= .0003;
-			}
+		if((Heading > targetAngle) && ((Heading - lastHeading > 0) || (System.currentTimeMillis() - headingCheckTime > 10))){
+			slowLeft -= .0003;
+			lastHeading = Heading;
+		} else if((Heading < targetAngle) && ((lastHeading - Heading > 0) || (System.currentTimeMillis() - headingCheckTime > 10))){
+			slowRight -= .0003;
+			lastHeading = Heading;
 		}
 		if(slowLeft > slowRight){
 			speedMult = 1 / slowLeft;
