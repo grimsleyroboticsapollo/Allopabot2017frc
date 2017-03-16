@@ -185,7 +185,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("init", init);
 		double[][] contours;
 		try{
-			if(contourArray != null){
+			if(contourArray != null && contourArray.size() > 0){
 				contours = new double[contourArray.size()][5];
 				SmartDashboard.putNumber("Contours", contourArray.size());
 				
@@ -532,33 +532,44 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void testPeriodic() {
 		double Heading = imu.getHeading();
-		double targetAngle = 0;
-		double speedMult = 1;
-		if((Heading > targetAngle) && ((Heading - lastHeading > 0) || (System.currentTimeMillis() - headingCheckTime > 10))){
-			slowLeft -= .0003;
+		double targetAngle = 0.0;
+		double speedAdd = 1.0;
+		if(System.currentTimeMillis() - headingCheckTime > 10){
+			if(Heading > targetAngle){
+				if(Heading > lastHeading){
+					slowLeft -= .01;
+				} else {
+					slowLeft -= .003;
+				}
+			} else if(Heading < targetAngle){
+				if(Heading < lastHeading){
+					slowRight -= .01;
+				} else {
+					slowRight -= .003;
+				}
+			}
 			lastHeading = Heading;
-		} else if((Heading < targetAngle) && ((lastHeading - Heading > 0) || (System.currentTimeMillis() - headingCheckTime > 10))){
-			slowRight -= .0003;
-			lastHeading = Heading;
+			headingCheckTime = System.currentTimeMillis();
 		}
+		
 		if(slowLeft > slowRight){
-			speedMult = 1 / slowLeft;
+			speedAdd = 1.0 - slowLeft;
 		}else{
-			speedMult = 1 / slowRight;
+			speedAdd = 1.0 - slowRight;
 		}
-		slowLeft = slowLeft * speedMult;
-		slowRight = slowRight * speedMult;
-		if(slowLeft > 1){
-			slowLeft = 1;
+		slowLeft = slowLeft + speedAdd;
+		slowRight = slowRight + speedAdd;
+		if(slowLeft > 1.0){
+			slowLeft = 1.0;
 		}
-		if(slowRight > 1){
-			slowRight = 1;
+		if(slowRight > 1.0){
+			slowRight = 1.0;
 		}
-		if(slowLeft <= 0.002){
-			slowLeft = 0.002;
+		if(slowLeft <= 0.0){
+			slowLeft = 0.0;
 		}
-		if(slowRight <= 0.002){
-			slowRight = 0.002;
+		if(slowRight <= 0.0){
+			slowRight = 0.0;
 		}
 		driveLeft1.set(-.3 * slowLeft);
         driveLeft2.set(-.3 * slowLeft);
