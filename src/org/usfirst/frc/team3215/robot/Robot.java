@@ -531,9 +531,11 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void testPeriodic() {
+		PID(0);
+	}
+	private void PID(double targetAngle){
 		double Heading = imu.getHeading();
-		double targetAngle = 0.0;
-		double speedAdd = 1.0;
+		double speedAdd = 0.0;
 		if(System.currentTimeMillis() - headingCheckTime > 10){
 			if(Heading > targetAngle){
 				if(Heading > lastHeading){
@@ -575,9 +577,9 @@ public class Robot extends IterativeRobot {
         driveLeft2.set(-.3 * slowLeft);
         driveRight1.set(-.3 * slowRight);
         driveRight2.set(-.3 * slowRight);
-        System.out.println("slowLeft = " + slowLeft);
-        System.out.println("slowRight = " + slowRight);
-        System.out.println("Heading = " + Heading);
+//        System.out.println("slowLeft = " + slowLeft);
+//        System.out.println("slowRight = " + slowRight);
+//        System.out.println("Heading = " + Heading);
 	}
 }
 
