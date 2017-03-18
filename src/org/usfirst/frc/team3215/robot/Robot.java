@@ -173,6 +173,7 @@ public class Robot extends IterativeRobot {
 		System.out.println("Auto selected: " + autoSelected);
 		led.set(true);
 		init = true;
+		targetAngle = imu.getHeading();
 	}
 
 	/**
@@ -277,7 +278,7 @@ public class Robot extends IterativeRobot {
 				PID(targetAngle);
 			} else {
 				autoSelected = "cross Line";
-				setTime = System.currentTimeMillis() + 1500;
+				setTime = System.currentTimeMillis();
 			}
 			break;
 		case hasturned:
@@ -327,7 +328,7 @@ public class Robot extends IterativeRobot {
 					driveRight2.set(0);
 				}
 			} else {
-				PID(0);
+				PID(targetAngle);
 			}
 			return;
 		case "cross Line":
