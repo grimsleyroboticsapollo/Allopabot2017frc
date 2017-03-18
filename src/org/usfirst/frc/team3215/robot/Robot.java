@@ -192,7 +192,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Current Time", System.currentTimeMillis());
 		SmartDashboard.putBoolean("init", init);
 		double[][] contours;
-		if (ArrayListisNew) {
+		if (ArrayListisNew) { // TODO #REVIEW need to set to false right away (otherwise bad things will happen)
 			synchronized (cameraMutex) {
 				ArrayList<MatOfPoint> contourArray = publishableOutput;
 
@@ -236,7 +236,7 @@ public class Robot extends IterativeRobot {
 					System.out.println("Error! There are no contours and publishableoutput was aceessed");
 
 					e.printStackTrace();
-					return;
+					return; // TODO #REVIEW return is not needed, how about just create a 0 contours list
 				}
 			}
 		} else {
@@ -294,7 +294,6 @@ public class Robot extends IterativeRobot {
 					} else {
 						targetAngle = imu.getHeading() + 10;
 					}
-					
 				}
 				PID(targetAngle);
 			} else {
@@ -308,7 +307,8 @@ public class Robot extends IterativeRobot {
 		case defaultAuto:
 			if (ultra.getRangeInches() < 7) {
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(1000); // TODO #REVIEW Are you sure you want to drive another second?
+					                    // Why not simply stop at 6 inches?
 				} catch (Exception e) {
 
 				} finally {
@@ -411,6 +411,12 @@ public class Robot extends IterativeRobot {
 
 		if (System.currentTimeMillis() - accelerationCheckTime > 10) {
 			double accelRate = (System.currentTimeMillis() - accelerationCheckTime) / 1000.0;
+			// TODO #REVIEW This line is OK because you divide by a double ("1000.0"). Just
+			// letting you know that if you would have divided just by "1000" (integer) then
+			// the accelRate value would pretty much always be 0 and robot would not move.
+			// TODO #REVIEW HAHAHA just letting you know that the next "safety check" lines
+			// are actually quite useful, because accelerationCheckTime is initialized as 0 ...
+			// which means the initial acceleration would have been a factor of millions :))
 			if (accelRate > .05) {
 				accelRate = .05;
 			}
@@ -502,7 +508,9 @@ public class Robot extends IterativeRobot {
 			if (System.currentTimeMillis() - headingCheckTime > 10) {
 				if (Heading > targetAngle) {
 					if (Heading > lastHeading) {
-						slowLeft -= .01;
+						slowLeft -= .01; // TODO #REVIEW wondering whether we should make these values dependent
+						                 // on the actually elapsed time interval, similarly to the
+						                 // accelRate above? (with safeguard, naturally)
 					} else {
 						slowLeft -= .003;
 					}
