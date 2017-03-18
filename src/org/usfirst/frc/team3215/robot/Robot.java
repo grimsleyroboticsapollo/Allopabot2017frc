@@ -290,9 +290,9 @@ public class Robot extends IterativeRobot {
 					}
 				} else if (numberOfContours == 1 && contours[0][0] > 10) {
 					if (contours[0][1] > 80) {
-						targetAngle = imu.getHeading() - 10;
+						targetAngle = imu.getHeading() - 20;
 					} else {
-						targetAngle = imu.getHeading() + 10;
+						targetAngle = imu.getHeading() + 20;
 					}
 				}
 				PID(targetAngle);
@@ -498,17 +498,22 @@ public class Robot extends IterativeRobot {
 	private void PID(double targetAngle) {
 		double Heading = imu.getHeading();
 		double speedAdd = 0.0;
-		if (Math.abs(Heading - targetAngle) > 5.0) {
+		if (Math.abs(Heading - targetAngle) > 15.0) {
+			
 			if (Heading > targetAngle) {
-				driveLeft1.set(-.3);
-				driveLeft2.set(-.3);
-				driveRight1.set(.3);
-				driveRight2.set(.3);
-			} else if (Heading < targetAngle) {
 				driveLeft1.set(.3);
 				driveLeft2.set(.3);
 				driveRight1.set(-.3);
 				driveRight2.set(-.3);
+				slowLeft = 0.0;
+				slowRight = 1.0;
+			} else if (Heading < targetAngle) {
+				driveLeft1.set(-.3);
+				driveLeft2.set(-.3);
+				driveRight1.set(.3);
+				driveRight2.set(.3);
+				slowLeft = 1.0;
+				slowRight = 0.0;
 			}
 		} else {
 			if (System.currentTimeMillis() - headingCheckTime > 10) {
