@@ -152,10 +152,10 @@ public class Robot extends IterativeRobot {
 		});
 		visionThread.setDaemon(true);
 		visionThread.start();
-		chooser.addDefault("Default Auto", defaultAuto);
+		chooser.addDefault("center", defaultAuto);
 		chooser.addObject("left goal", autoLeft);
 		chooser.addObject("right goal", autoRight);
-		chooser.addObject("default", "actualDefault");
+		chooser.addObject("line", "cross Line");
 		chooser.addObject("nothing", "aaaaaaaaaaaaaaaaa");
 		SmartDashboard.putData("Auto choices", chooser);
 	}
@@ -174,7 +174,6 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousInit() {
 		autoSelected = chooser.getSelected();
-		autoSelected = "aaaaaaaaaaaaaaaaa";
 		System.out.println("Auto selected: " + autoSelected);
 		led.set(true);
 		init = true;
@@ -307,7 +306,7 @@ public class Robot extends IterativeRobot {
 						angleCheck = imu.getHeading();
 						canSetAngle = false;
 					}
-					if (goLeft) {
+					if (contours[0][1] < 80) {
 						driveLeft1.set(.3);
 						driveLeft2.set(.3);
 						driveRight1.set(-.3);
@@ -342,73 +341,13 @@ public class Robot extends IterativeRobot {
 				driveRight1.set(0);
 				driveRight2.set(0);
 			} else {
-				double Heading = imu.getHeading();
-				targetAngle = 0;
-				double speedMult = 1;
-				if (Heading < targetAngle) {
-					slowLeft -= .1;
-				} else if (Heading > targetAngle) {
-					slowRight -= .1;
-				}
-				if (slowLeft > slowRight) {
-					speedMult = 1 / slowLeft;
-				} else {
-					speedMult = 1 / slowRight;
-				}
-				slowLeft = slowLeft * speedMult;
-				slowRight = slowRight * speedMult;
-				if (slowLeft > 1) {
-					slowLeft = 1;
-				}
-				if (slowRight > 1) {
-					slowRight = 1;
-				}
-				if (slowLeft < 0) {
-					slowLeft = 0;
-				}
-				if (slowRight < 0) {
-					slowRight = 0;
-				}
-				driveLeft1.set(-.3 * slowLeft);
-				driveLeft2.set(-.3 * slowLeft);
-				driveRight1.set(-.3 * slowRight);
-				driveRight2.set(-.3 * slowRight);
+				PID(0);
 			}
 			return;
-		case "actualDefault":
-			// Do Nothing
+		case "cross Line":
+			// crosses the green line on the field.
 			if (System.currentTimeMillis() - setTime < 3000) {
-				double Heading = imu.getHeading();
-				targetAngle = 0;
-				double speedMult = 1;
-				if (Heading < targetAngle) {
-					slowLeft -= .1;
-				} else if (Heading > targetAngle) {
-					slowRight -= .1;
-				}
-				if (slowLeft > slowRight) {
-					speedMult = 1 / slowLeft;
-				} else {
-					speedMult = 1 / slowRight;
-				}
-				slowLeft = slowLeft * speedMult;
-				slowRight = slowRight * speedMult;
-				if (slowLeft > 1) {
-					slowLeft = 1;
-				}
-				if (slowRight > 1) {
-					slowRight = 1;
-				}
-				if (slowLeft < 0) {
-					slowLeft = 0;
-				}
-				if (slowRight < 0) {
-					slowRight = 0;
-				}
-				driveLeft1.set(-.3 * slowLeft);
-				driveLeft2.set(-.3 * slowLeft);
-				driveRight1.set(-.3 * slowRight);
-				driveRight2.set(-.3 * slowRight);
+				PID(0);
 			} else {
 				driveLeft1.set(0);
 				driveLeft2.set(0);
