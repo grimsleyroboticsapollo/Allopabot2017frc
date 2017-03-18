@@ -521,7 +521,7 @@ public class Robot extends IterativeRobot {
 			}
 		} else {
 			if (System.currentTimeMillis() - headingCheckTime > 10) {
-				double elapsedTime = (System.currentTimeMillis() - headingCheckTime) / 1000.0;
+				double elapsedTime = (System.currentTimeMillis() - headingCheckTime) / 3000.0;
 				if (elapsedTime > .05) {
 					elapsedTime = .05;
 				}
