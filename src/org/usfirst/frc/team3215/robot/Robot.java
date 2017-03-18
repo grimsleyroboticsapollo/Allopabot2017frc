@@ -74,7 +74,7 @@ public class Robot extends IterativeRobot {
 	double slowRight = 1;
 	final String hasturned = "has turned";
 	final String turning = "turning";
-	double targetAngle = 0;
+	double targetAngle = 0.0;
 	long headingCheckTime = 0;
 	long accelerationCheckTime = 0;
 	double lastHeading = 0;
@@ -276,7 +276,8 @@ public class Robot extends IterativeRobot {
 			if (Math.abs(imu.getHeading() - targetAngle) > 5.0) {
 				PID(targetAngle);
 			} else {
-				autoSelected = hasturned;
+				autoSelected = "cross Line";
+				setTime = System.currentTimeMillis() + 1500;
 			}
 			break;
 		case hasturned:
@@ -332,7 +333,7 @@ public class Robot extends IterativeRobot {
 		case "cross Line":
 			// crosses the green line on the field.
 			if (System.currentTimeMillis() - setTime < 3000) {
-				PID(0);
+				PID(targetAngle);
 			} else {
 				driveLeft1.set(0);
 				driveLeft2.set(0);
