@@ -186,7 +186,8 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Current Time", System.currentTimeMillis());
 		SmartDashboard.putBoolean("init", init);
 		double[][] contours;
-		if (ArrayListisNew) { // TODO #REVIEW need to set to false right away (otherwise bad things will happen)
+		if (ArrayListisNew) { // TODO #REVIEW need to set to false right away
+								// (otherwise bad things will happen)
 			ArrayListisNew = false;
 			synchronized (cameraMutex) {
 				ArrayList<MatOfPoint> contourArray = publishableOutput;
@@ -313,8 +314,9 @@ public class Robot extends IterativeRobot {
 		case defaultAuto:
 			if (ultra.getRangeInches() < 7) {
 				try {
-					Thread.sleep(500); // TODO #REVIEW Are you sure you want to drive another second?
-					                    // Why not simply stop at 6 inches?
+					Thread.sleep(500); // TODO #REVIEW Are you sure you want to
+										// drive another second?
+										// Why not simply stop at 6 inches?
 				} catch (Exception e) {
 
 				} finally {
@@ -376,12 +378,12 @@ public class Robot extends IterativeRobot {
 		 * SmartDashboard.putString("Go", "No Reflections Found!"); }
 		 */
 		SmartDashboard.putNumber("heading", imu.getHeading());
-		if(canSetExposure){
-			try{
+		if (canSetExposure) {
+			try {
 				camera.setExposureManual(75);
 				canSetExposure = false;
-			} catch (Exception e){
-				
+			} catch (Exception e) {
+
 			}
 		}
 		double turn = .9 * Joystick1.getRawAxis(4) * Math.abs(Joystick1.getRawAxis(4)); // right
@@ -417,24 +419,26 @@ public class Robot extends IterativeRobot {
 
 		if (System.currentTimeMillis() - accelerationCheckTime > 10) {
 			double accelRate = (System.currentTimeMillis() - accelerationCheckTime) / 1000.0;
-			// TODO #REVIEW This line is OK because you divide by a double ("1000.0"). Just
-			// letting you know that if you would have divided just by "1000" (integer) then
-			// the accelRate value would pretty much always be 0 and robot would not move.
-			// TODO #REVIEW HAHAHA just letting you know that the next "safety check" lines
-			// are actually quite useful, because accelerationCheckTime is initialized as 0 ...
-			// which means the initial acceleration would have been a factor of millions :))
 			if (accelRate > .05) {
 				accelRate = .05;
 			}
-			if (leftDriveSpeed > leftSpeed) {
-				leftDriveSpeed -= accelRate;
+			if ((Math.abs(Math.signum(leftDriveSpeed) + Math.signum(leftSpeed)) < 0.05) || Math.abs(leftSpeed) < .05) {
+				leftDriveSpeed = 0.0;
 			} else {
-				leftDriveSpeed += accelRate;
+				if (leftDriveSpeed > rightSpeed) {
+					leftDriveSpeed -= accelRate;
+				} else {
+					leftDriveSpeed += accelRate;
+				}
 			}
-			if (rightDriveSpeed > rightSpeed) {
-				rightDriveSpeed -= accelRate;
+			if ((Math.abs(Math.signum(rightDriveSpeed) + Math.signum(rightSpeed)) < 0.05) || Math.abs(rightSpeed) < .05) {
+				rightDriveSpeed = 0.0;
 			} else {
-				rightDriveSpeed += accelRate;
+				if (rightDriveSpeed > rightSpeed) {
+					rightDriveSpeed -= accelRate;
+				} else {
+					rightDriveSpeed += accelRate;
+				}
 			}
 			accelerationCheckTime = System.currentTimeMillis();
 		}
@@ -499,7 +503,7 @@ public class Robot extends IterativeRobot {
 		double Heading = imu.getHeading();
 		double speedAdd = 0.0;
 		if (Math.abs(Heading - targetAngle) > 15.0) {
-			
+
 			if (Heading > targetAngle) {
 				driveLeft1.set(.3);
 				driveLeft2.set(.3);
@@ -518,14 +522,17 @@ public class Robot extends IterativeRobot {
 		} else {
 			if (System.currentTimeMillis() - headingCheckTime > 10) {
 				double elapsedTime = (System.currentTimeMillis() - headingCheckTime) / 1000.0;
-				if(elapsedTime > .05){
+				if (elapsedTime > .05) {
 					elapsedTime = .05;
 				}
 				if (Heading > targetAngle) {
 					if (Heading > lastHeading) {
-						slowLeft -= elapsedTime; // TODO #REVIEW wondering whether we should make these values dependent
-						                 // on the actually elapsed time interval, similarly to the
-						                 // accelRate above? (with safeguard, naturally)
+						slowLeft -= elapsedTime; // TODO #REVIEW wondering
+													// whether we should make
+													// these values dependent
+						// on the actually elapsed time interval, similarly to
+						// the
+						// accelRate above? (with safeguard, naturally)
 					} else {
 						slowLeft -= elapsedTime / 3.0;
 					}
