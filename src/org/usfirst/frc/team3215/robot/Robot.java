@@ -141,7 +141,6 @@ public class Robot extends IterativeRobot {
 				try {
 					Thread.sleep(10);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -189,8 +188,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Current Time", System.currentTimeMillis());
 		SmartDashboard.putBoolean("init", init);
 		double[][] contours;
-		if (ArrayListisNew) { // TODO #REVIEW need to set to false right away
-								// (otherwise bad things will happen)
+		if (ArrayListisNew) { 
 			ArrayListisNew = false;
 			synchronized (cameraMutex) {
 				ArrayList<MatOfPoint> contourArray = publishableOutput;
@@ -320,9 +318,7 @@ public class Robot extends IterativeRobot {
 		case defaultAuto:
 			if (ultra.getRangeInches() < 7) {
 				try {
-					Thread.sleep(500); // TODO #REVIEW Are you sure you want to
-										// drive another second?
-										// Why not simply stop at 6 inches?
+					Thread.sleep(500);
 				} catch (Exception e) {
 
 				} finally {
@@ -544,12 +540,7 @@ public class Robot extends IterativeRobot {
 				}
 				if (Heading > targetAngle) {
 					if (Heading > lastHeading) {
-						slowLeft -= elapsedTime; // TODO #REVIEW wondering
-													// whether we should make
-													// these values dependent
-						// on the actually elapsed time interval, similarly to
-						// the
-						// accelRate above? (with safeguard, naturally)
+						slowLeft -= elapsedTime;
 					} else {
 						slowLeft -= elapsedTime / 3.0;
 					}
