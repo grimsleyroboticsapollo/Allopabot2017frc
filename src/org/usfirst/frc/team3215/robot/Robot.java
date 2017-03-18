@@ -83,6 +83,7 @@ public class Robot extends IterativeRobot {
 	boolean ArrayListisNew = false;
 	final Object cameraMutex = new Object();
 	boolean canSetExposure = true;
+	private double targetAngleDelta = 0;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -173,7 +174,8 @@ public class Robot extends IterativeRobot {
 		System.out.println("Auto selected: " + autoSelected);
 		led.set(true);
 		init = true;
-		targetAngle = imu.getHeading();
+		targetAngleDelta = imu.getHeading();
+		targetAngle = targetAngleDelta ;
 	}
 
 	/**
@@ -257,25 +259,27 @@ public class Robot extends IterativeRobot {
 		switch (autoSelected) {
 		case autoLeft:
 			// Put custom auto code here
-			targetAngle = 60;
+			targetAngle = 60.0 + targetAngleDelta;
+			targetAngleDelta = 0.0;
 			if (System.currentTimeMillis() - setTime < 2000) {
-				PID(0);
+				PID(targetAngle, false);
 			} else {
 				autoSelected = turning;
 			}
 			break;
 		case autoRight:
 			// Put custom auto code here
-			targetAngle = -60;
+			targetAngle = -60.0 + targetAngleDelta;
+			targetAngleDelta = 0.0;
 			if (System.currentTimeMillis() - setTime < 2000) {
-				PID(0);
+				PID(targetAngle, false);
 			} else {
 				autoSelected = turning;
 			}
 			break;
 		case turning:
 			if (Math.abs(imu.getHeading() - targetAngle) > 5.0) {
-				PID(targetAngle);
+				PID(targetAngle, true);
 			} else {
 				autoSelected = "cross Line";
 				setTime = System.currentTimeMillis();
@@ -328,13 +332,13 @@ public class Robot extends IterativeRobot {
 					driveRight2.set(0);
 				}
 			} else {
-				PID(targetAngle);
+				PID(targetAngle, true);
 			}
 			return;
 		case "cross Line":
 			// crosses the green line on the field.
 			if (System.currentTimeMillis() - setTime < 3000) {
-				PID(targetAngle);
+				PID(targetAngle, false);
 			} else {
 				driveLeft1.set(0);
 				driveLeft2.set(0);
@@ -499,17 +503,22 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void testPeriodic() {
-		PID(0);
+		PID(0, false);
 	}
 
-	private void PID(double targetAngle) {
+	private void PID(double targetAngle, boolean canGoNegative) {
 		double Heading = imu.getHeading();
 		double speedAdd = 0.0;
 		if (Math.abs(Heading - targetAngle) > 15.0) {
 
 			if (Heading > targetAngle) {
-				driveLeft1.set(.2);
-				driveLeft2.set(.2);
+				if(canGoNegative){
+					driveLeft1.set(.2);
+					driveLeft2.set(.2);
+				} else {
+					driveLeft1.set(0);
+					driveLeft2.set(0);
+				}
 				driveRight1.set(-.2);
 				driveRight2.set(-.2);
 				slowLeft = 0.0;
@@ -517,8 +526,13 @@ public class Robot extends IterativeRobot {
 			} else if (Heading < targetAngle) {
 				driveLeft1.set(-.2);
 				driveLeft2.set(-.2);
-				driveRight1.set(.2);
-				driveRight2.set(.2);
+				if(canGoNegative){
+					driveRight1.set(.2);
+					driveRight2.set(.2);
+				} else {
+					driveRight1.set(0);
+					driveRight2.set(0);
+				}
 				slowLeft = 1.0;
 				slowRight = 0.0;
 			}
