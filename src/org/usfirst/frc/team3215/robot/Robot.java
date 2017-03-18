@@ -257,7 +257,7 @@ public class Robot extends IterativeRobot {
 		case autoLeft:
 			// Put custom auto code here
 			targetAngle = 60;
-			if (System.currentTimeMillis() - setTime < 2500) {
+			if (System.currentTimeMillis() - setTime < 2000) {
 				PID(0);
 			} else {
 				autoSelected = turning;
@@ -266,7 +266,7 @@ public class Robot extends IterativeRobot {
 		case autoRight:
 			// Put custom auto code here
 			targetAngle = -60;
-			if (System.currentTimeMillis() - setTime < 2500) {
+			if (System.currentTimeMillis() - setTime < 2000) {
 				PID(0);
 			} else {
 				autoSelected = turning;
@@ -507,17 +507,17 @@ public class Robot extends IterativeRobot {
 		if (Math.abs(Heading - targetAngle) > 15.0) {
 
 			if (Heading > targetAngle) {
-				driveLeft1.set(.3);
-				driveLeft2.set(.3);
-				driveRight1.set(-.3);
-				driveRight2.set(-.3);
+				driveLeft1.set(.2);
+				driveLeft2.set(.2);
+				driveRight1.set(-.2);
+				driveRight2.set(-.2);
 				slowLeft = 0.0;
 				slowRight = 1.0;
 			} else if (Heading < targetAngle) {
-				driveLeft1.set(-.3);
-				driveLeft2.set(-.3);
-				driveRight1.set(.3);
-				driveRight2.set(.3);
+				driveLeft1.set(-.2);
+				driveLeft2.set(-.2);
+				driveRight1.set(.2);
+				driveRight2.set(.2);
 				slowLeft = 1.0;
 				slowRight = 0.0;
 			}
