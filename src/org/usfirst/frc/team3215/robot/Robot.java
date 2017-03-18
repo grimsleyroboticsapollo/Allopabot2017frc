@@ -422,6 +422,7 @@ public class Robot extends IterativeRobot {
 			if (accelRate > .05) {
 				accelRate = .05;
 			}
+			
 			if ((Math.abs(Math.signum(leftDriveSpeed) + Math.signum(leftSpeed)) < 0.05) || Math.abs(leftSpeed) < .05) {
 				leftDriveSpeed = 0.0;
 			} else {
