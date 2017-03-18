@@ -12,7 +12,6 @@ import org.opencv.imgproc.Imgproc;
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.UsbCamera;
-import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.BuiltInAccelerometer;
 import edu.wpi.first.wpilibj.CameraServer;
@@ -37,8 +36,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * directory.
  */
 public class Robot extends IterativeRobot {
-	boolean LastForklift = false;
-	boolean desiredEncoder = false;
 	// The joysticks and their respective USB ports on the driver station
 	Joystick Joystick1 = new Joystick(1);
 	Joystick Joystick2 = new Joystick(0);
@@ -71,8 +68,6 @@ public class Robot extends IterativeRobot {
 	long setTime = 0, initTime;
 	boolean hasTurned = false;
 	DigitalOutput led = new DigitalOutput(2);
-	boolean canSetAngle = true;
-	double angleCheck = 0;
 	boolean goLeft = true;
 	boolean init = true;
 	double slowLeft = 1;
@@ -178,7 +173,6 @@ public class Robot extends IterativeRobot {
 		System.out.println("Auto selected: " + autoSelected);
 		led.set(true);
 		init = true;
-		canSetAngle = true;
 	}
 
 	/**
@@ -193,6 +187,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("init", init);
 		double[][] contours;
 		if (ArrayListisNew) { // TODO #REVIEW need to set to false right away (otherwise bad things will happen)
+			ArrayListisNew = false;
 			synchronized (cameraMutex) {
 				ArrayList<MatOfPoint> contourArray = publishableOutput;
 
@@ -236,7 +231,12 @@ public class Robot extends IterativeRobot {
 					System.out.println("Error! There are no contours and publishableoutput was aceessed");
 
 					e.printStackTrace();
-					return; // TODO #REVIEW return is not needed, how about just create a 0 contours list
+					contours = new double[1][5];
+					contours[0][0] = 0;
+					contours[0][1] = 0;
+					contours[0][2] = 0;
+					contours[0][3] = 0;
+					contours[0][4] = 0;
 				}
 			}
 		} else {
@@ -297,17 +297,23 @@ public class Robot extends IterativeRobot {
 				}
 				PID(targetAngle);
 			} else {
-				driveLeft1.set(0);
-				driveLeft2.set(0);
-				driveRight1.set(0);
-				driveRight2.set(0);
+				try {
+					Thread.sleep(500);
+				} catch (Exception e) {
+
+				} finally {
+					driveLeft1.set(0);
+					driveLeft2.set(0);
+					driveRight1.set(0);
+					driveRight2.set(0);
+				}
 			}
 
 			return;
 		case defaultAuto:
 			if (ultra.getRangeInches() < 7) {
 				try {
-					Thread.sleep(1000); // TODO #REVIEW Are you sure you want to drive another second?
+					Thread.sleep(500); // TODO #REVIEW Are you sure you want to drive another second?
 					                    // Why not simply stop at 6 inches?
 				} catch (Exception e) {
 
@@ -506,19 +512,23 @@ public class Robot extends IterativeRobot {
 			}
 		} else {
 			if (System.currentTimeMillis() - headingCheckTime > 10) {
+				double elapsedTime = (System.currentTimeMillis() - headingCheckTime) / 1000.0;
+				if(elapsedTime > .05){
+					elapsedTime = .05;
+				}
 				if (Heading > targetAngle) {
 					if (Heading > lastHeading) {
-						slowLeft -= .01; // TODO #REVIEW wondering whether we should make these values dependent
+						slowLeft -= elapsedTime; // TODO #REVIEW wondering whether we should make these values dependent
 						                 // on the actually elapsed time interval, similarly to the
 						                 // accelRate above? (with safeguard, naturally)
 					} else {
-						slowLeft -= .003;
+						slowLeft -= elapsedTime / 3.0;
 					}
 				} else if (Heading < targetAngle) {
 					if (Heading < lastHeading) {
-						slowRight -= .01;
+						slowRight -= elapsedTime;
 					} else {
-						slowRight -= .003;
+						slowRight -= elapsedTime / 3.0;
 					}
 				}
 				lastHeading = Heading;
