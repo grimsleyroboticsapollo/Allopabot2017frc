@@ -87,6 +87,7 @@ public class Robot extends IterativeRobot {
 	double rightDriveSpeed = 0;
 	boolean ArrayListisNew = false;
 	final Object cameraMutex = new Object();
+	boolean canSetExposure = true;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -114,10 +115,10 @@ public class Robot extends IterativeRobot {
 				+ " Mag=" + cal.mag);
 		visionThread = new Thread(() -> {
 			// Get the UsbCamera from CameraServer
-			UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+			camera = CameraServer.getInstance().startAutomaticCapture();
 			// Set the resolution
 			camera.setResolution(640, 480);
-			camera.setExposureManual(75);
+			camera.setExposureManual(0);
 			// Get a CvSink. This will capture Mats from the camera
 			CvSink cvSink = CameraServer.getInstance().getVideo();
 			// Setup a CvSource. This will send images back to the Dashboard
@@ -191,10 +192,10 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putNumber("Current Time", System.currentTimeMillis());
 		SmartDashboard.putBoolean("init", init);
 		double[][] contours;
-		if(ArrayListisNew){
+		if (ArrayListisNew) {
 			synchronized (cameraMutex) {
 				ArrayList<MatOfPoint> contourArray = publishableOutput;
-				
+
 				try {
 					if (contourArray != null && contourArray.size() > 0) {
 						contours = new double[contourArray.size()][5];
@@ -212,12 +213,15 @@ public class Robot extends IterativeRobot {
 							 * SmartDashboard.putNumber("area" + i,
 							 * Imgproc.contourArea(thisContour));
 							 * SmartDashboard.putNumber("centerX" + i, dimen.x +
-							 * (dimen.width / 2)); SmartDashboard.putNumber("centerY" +
-							 * i, dimen.y + (dimen.height / 2));
-							 * SmartDashboard.putNumber("height" + i, dimen.height);
-							 * SmartDashboard.putNumber("width" + i, dimen.width);
+							 * (dimen.width / 2));
+							 * SmartDashboard.putNumber("centerY" + i, dimen.y +
+							 * (dimen.height / 2));
+							 * SmartDashboard.putNumber("height" + i,
+							 * dimen.height); SmartDashboard.putNumber("width" +
+							 * i, dimen.width);
 							 */
-							// I commented this out because it's not useful unless
+							// I commented this out because it's not useful
+							// unless
 							// console is needed
 						}
 					} else {
@@ -233,7 +237,7 @@ public class Robot extends IterativeRobot {
 
 					e.printStackTrace();
 					return;
-				}	
+				}
 			}
 		} else {
 			contours = new double[1][5];
@@ -243,8 +247,6 @@ public class Robot extends IterativeRobot {
 			contours[0][3] = 0;
 			contours[0][4] = 0;
 		}
-		
-		
 
 		if (init) {
 			setTime = System.currentTimeMillis();
@@ -270,16 +272,8 @@ public class Robot extends IterativeRobot {
 			}
 			break;
 		case turning:
-			if (imu.getHeading() < targetAngle - 5) {
-				driveLeft1.set(.3);
-				driveLeft2.set(.3);
-				driveRight1.set(-.3);
-				driveRight2.set(-.3);
-			} else if (imu.getHeading() > targetAngle + 5) {
-				driveLeft1.set(-.3);
-				driveLeft2.set(-.3);
-				driveRight1.set(.3);
-				driveRight2.set(.3);
+			if (Math.abs(imu.getHeading() - targetAngle) > 5.0) {
+				PID(targetAngle);
 			} else {
 				autoSelected = hasturned;
 			}
@@ -289,40 +283,20 @@ public class Robot extends IterativeRobot {
 			if (ultra.getRangeInches() > 6) {
 				if (numberOfContours == 2) {
 					double centerX = (contours[0][1] + contours[1][1]) / 2.0;
-					double driveOff = 1.0 - ((Math.abs(centerX - 80.0)) / 80.0);
 					if (centerX < 80) {
-						driveLeft1.set(-.3);
-						driveLeft2.set(-.3);
-						driveRight1.set(-.3 * driveOff);
-						driveRight2.set(-.3 * driveOff);
-					} else {
-						driveLeft1.set(-.3 * driveOff);
-						driveLeft2.set(-.3 * driveOff);
-						driveRight1.set(-.3);
-						driveRight2.set(-.3);
+						targetAngle = imu.getHeading() + .5;
+					} else if (centerX > 80) {
+						targetAngle = imu.getHeading() - .5;
 					}
 				} else if (numberOfContours == 1 && contours[0][0] > 10) {
-					if (canSetAngle) {
-						angleCheck = imu.getHeading();
-						canSetAngle = false;
-					}
-					if (contours[0][1] < 80) {
-						driveLeft1.set(.3);
-						driveLeft2.set(.3);
-						driveRight1.set(-.3);
-						driveRight2.set(-.3);
+					if (contours[0][1] > 80) {
+						targetAngle = imu.getHeading() - 10;
 					} else {
-						driveLeft1.set(-.3);
-						driveLeft2.set(-.3);
-						driveRight1.set(.3);
-						driveRight2.set(.3);
+						targetAngle = imu.getHeading() + 10;
 					}
-				} else {
-					driveLeft1.set(-.3);
-					driveLeft2.set(-.3);
-					driveRight1.set(-.3);
-					driveRight2.set(-.3);
+					
 				}
+				PID(targetAngle);
 			} else {
 				driveLeft1.set(0);
 				driveLeft2.set(0);
@@ -333,10 +307,10 @@ public class Robot extends IterativeRobot {
 			return;
 		case defaultAuto:
 			if (ultra.getRangeInches() < 7) {
-				try{
+				try {
 					Thread.sleep(1000);
-				} catch(Exception e){
-					
+				} catch (Exception e) {
+
 				} finally {
 					driveLeft1.set(0);
 					driveLeft2.set(0);
@@ -396,6 +370,14 @@ public class Robot extends IterativeRobot {
 		 * SmartDashboard.putString("Go", "No Reflections Found!"); }
 		 */
 		SmartDashboard.putNumber("heading", imu.getHeading());
+		if(canSetExposure){
+			try{
+				camera.setExposureManual(75);
+				canSetExposure = false;
+			} catch (Exception e){
+				
+			}
+		}
 		double turn = .9 * Joystick1.getRawAxis(4) * Math.abs(Joystick1.getRawAxis(4)); // right
 																						// joystick
 																						// x-axis
@@ -504,47 +486,61 @@ public class Robot extends IterativeRobot {
 	private void PID(double targetAngle) {
 		double Heading = imu.getHeading();
 		double speedAdd = 0.0;
-		if (System.currentTimeMillis() - headingCheckTime > 10) {
+		if (Math.abs(Heading - targetAngle) > 5.0) {
 			if (Heading > targetAngle) {
-				if (Heading > lastHeading) {
-					slowLeft -= .01;
-				} else {
-					slowLeft -= .003;
-				}
+				driveLeft1.set(-.3);
+				driveLeft2.set(-.3);
+				driveRight1.set(.3);
+				driveRight2.set(.3);
 			} else if (Heading < targetAngle) {
-				if (Heading < lastHeading) {
-					slowRight -= .01;
-				} else {
-					slowRight -= .003;
-				}
+				driveLeft1.set(.3);
+				driveLeft2.set(.3);
+				driveRight1.set(-.3);
+				driveRight2.set(-.3);
 			}
-			lastHeading = Heading;
-			headingCheckTime = System.currentTimeMillis();
-		}
-
-		if (slowLeft > slowRight) {
-			speedAdd = 1.0 - slowLeft;
 		} else {
-			speedAdd = 1.0 - slowRight;
+			if (System.currentTimeMillis() - headingCheckTime > 10) {
+				if (Heading > targetAngle) {
+					if (Heading > lastHeading) {
+						slowLeft -= .01;
+					} else {
+						slowLeft -= .003;
+					}
+				} else if (Heading < targetAngle) {
+					if (Heading < lastHeading) {
+						slowRight -= .01;
+					} else {
+						slowRight -= .003;
+					}
+				}
+				lastHeading = Heading;
+				headingCheckTime = System.currentTimeMillis();
+			}
+
+			if (slowLeft > slowRight) {
+				speedAdd = 1.0 - slowLeft;
+			} else {
+				speedAdd = 1.0 - slowRight;
+			}
+			slowLeft = slowLeft + speedAdd;
+			slowRight = slowRight + speedAdd;
+			if (slowLeft > 1.0) {
+				slowLeft = 1.0;
+			}
+			if (slowRight > 1.0) {
+				slowRight = 1.0;
+			}
+			if (slowLeft <= 0.0) {
+				slowLeft = 0.0;
+			}
+			if (slowRight <= 0.0) {
+				slowRight = 0.0;
+			}
+			driveLeft1.set(-.3 * slowLeft);
+			driveLeft2.set(-.3 * slowLeft);
+			driveRight1.set(-.3 * slowRight);
+			driveRight2.set(-.3 * slowRight);
 		}
-		slowLeft = slowLeft + speedAdd;
-		slowRight = slowRight + speedAdd;
-		if (slowLeft > 1.0) {
-			slowLeft = 1.0;
-		}
-		if (slowRight > 1.0) {
-			slowRight = 1.0;
-		}
-		if (slowLeft <= 0.0) {
-			slowLeft = 0.0;
-		}
-		if (slowRight <= 0.0) {
-			slowRight = 0.0;
-		}
-		driveLeft1.set(-.3 * slowLeft);
-		driveLeft2.set(-.3 * slowLeft);
-		driveRight1.set(-.3 * slowRight);
-		driveRight2.set(-.3 * slowRight);
 		// System.out.println("slowLeft = " + slowLeft);
 		// System.out.println("slowRight = " + slowRight);
 		// System.out.println("Heading = " + Heading);
