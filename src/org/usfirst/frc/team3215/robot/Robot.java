@@ -333,13 +333,16 @@ public class Robot extends IterativeRobot {
 			return;
 		case defaultAuto:
 			if (ultra.getRangeInches() < 7) {
-				long time = System.currentTimeMillis();
-				while (System.currentTimeMillis() - time < 1000)
-					;
-				driveLeft1.set(0);
-				driveLeft2.set(0);
-				driveRight1.set(0);
-				driveRight2.set(0);
+				try{
+					Thread.sleep(1000);
+				} catch(Exception e){
+					
+				} finally {
+					driveLeft1.set(0);
+					driveLeft2.set(0);
+					driveRight1.set(0);
+					driveRight2.set(0);
+				}
 			} else {
 				PID(0);
 			}
