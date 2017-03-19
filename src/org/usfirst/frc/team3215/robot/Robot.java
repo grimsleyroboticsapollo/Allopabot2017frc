@@ -83,7 +83,8 @@ public class Robot extends IterativeRobot {
 	boolean ArrayListisNew = false;
 	final Object cameraMutex = new Object();
 	boolean canSetExposure = true;
-	private double targetAngleDelta = 0;
+	private long imuCheckTime = 0;
+	private double initialImuAngle = 0;
 
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -119,7 +120,7 @@ public class Robot extends IterativeRobot {
 			CvSink cvSink = CameraServer.getInstance().getVideo();
 			// Setup a CvSource. This will send images back to the Dashboard
 			CvSource outputStream = CameraServer.getInstance().putVideo("Rectangle", 640, 480);
-
+			
 			// Mats are very memory expensive. Lets reuse this Mat.
 			Mat mat = new Mat();
 
@@ -127,6 +128,10 @@ public class Robot extends IterativeRobot {
 			// lets the robot stop this thread when restarting robot code or
 			// deploying.
 			while (!Thread.interrupted()) {
+				if(System.currentTimeMillis() - imuCheckTime > 100){
+					imuCheckTime  = System.currentTimeMillis();
+					initialImuAngle  = ((initialImuAngle * .9) + imu.getHeading() * .1);
+				}
 				if (cvSink.grabFrame(mat) == 0) {
 					// Send the output the error.
 					outputStream.notifyError(cvSink.getError());
@@ -173,8 +178,8 @@ public class Robot extends IterativeRobot {
 		System.out.println("Auto selected: " + autoSelected);
 		led.set(true);
 		init = true;
-		targetAngleDelta = imu.getHeading();
-		targetAngle = targetAngleDelta ;
+		targetAngle = initialImuAngle;
+		
 	}
 
 	/**
@@ -262,8 +267,7 @@ public class Robot extends IterativeRobot {
 				PID(targetAngle, false);
 			} else {
 				autoSelected = turning;
-				targetAngle = 60.0 + targetAngleDelta;
-				targetAngleDelta = 0.0;
+				targetAngle += 60.0;
 			}
 			break;
 		case autoRight:
@@ -273,8 +277,7 @@ public class Robot extends IterativeRobot {
 				PID(targetAngle, false);
 			} else {
 				autoSelected = turning;
-				targetAngle = -60.0 + targetAngleDelta;
-				targetAngleDelta = 0.0;
+				targetAngle -= 60.0;
 			}
 			break;
 		case turning:
