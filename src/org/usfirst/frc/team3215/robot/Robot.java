@@ -257,22 +257,24 @@ public class Robot extends IterativeRobot {
 		switch (autoSelected) {
 		case autoLeft:
 			// Put custom auto code here
-			targetAngle = 60.0 + targetAngleDelta;
-			targetAngleDelta = 0.0;
+			
 			if (System.currentTimeMillis() - setTime < 2000) {
 				PID(targetAngle, false);
 			} else {
 				autoSelected = turning;
+				targetAngle = 60.0 + targetAngleDelta;
+				targetAngleDelta = 0.0;
 			}
 			break;
 		case autoRight:
 			// Put custom auto code here
-			targetAngle = -60.0 + targetAngleDelta;
-			targetAngleDelta = 0.0;
+			
 			if (System.currentTimeMillis() - setTime < 2000) {
 				PID(targetAngle, false);
 			} else {
 				autoSelected = turning;
+				targetAngle = -60.0 + targetAngleDelta;
+				targetAngleDelta = 0.0;
 			}
 			break;
 		case turning:
@@ -300,7 +302,7 @@ public class Robot extends IterativeRobot {
 						targetAngle = imu.getHeading() + 20;
 					}
 				}
-				PID(targetAngle);
+				PID(targetAngle, true);
 			} else {
 				try {
 					Thread.sleep(500);
@@ -333,7 +335,7 @@ public class Robot extends IterativeRobot {
 			return;
 		case "cross Line":
 			// crosses the green line on the field.
-			if (System.currentTimeMillis() - setTime < 3000) {
+			if (System.currentTimeMillis() - setTime < 4000) {
 				PID(targetAngle, false);
 			} else {
 				driveLeft1.set(0);
@@ -517,7 +519,7 @@ public class Robot extends IterativeRobot {
 				}
 				driveRight1.set(-.2);
 				driveRight2.set(-.2);
-				slowLeft = 0.0;
+				slowLeft = 0.5;
 				slowRight = 1.0;
 			} else if (Heading < targetAngle) {
 				driveLeft1.set(-.2);
@@ -530,7 +532,7 @@ public class Robot extends IterativeRobot {
 					driveRight2.set(0);
 				}
 				slowLeft = 1.0;
-				slowRight = 0.0;
+				slowRight = 0.5;
 			}
 		} else {
 			if (System.currentTimeMillis() - headingCheckTime > 10) {
