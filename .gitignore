@@ -1,1 +1,5 @@
 /bin/
+bin\*
+/dist/
+dist\*
+*.class

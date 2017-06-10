@@ -393,12 +393,8 @@ public class Robot extends IterativeRobot {
 
 			}
 		}
-		double turn = .9 * Joystick1.getRawAxis(4) * Math.abs(Joystick1.getRawAxis(4)); // right
-																						// joystick
-																						// x-axis
-		double speed = .9 * Joystick1.getRawAxis(1) * Math.abs(Joystick1.getRawAxis(1)); // left
-																							// joystick
-																							// y-axis
+		double orientRobotTurn = Joystick1.getRawAxis(2); // leftt joystick x-axis
+		double orientRobotSpeed = Joystick1.getRawAxis(1); // left joystick y-axis
 		boolean VTEC = Joystick1.getRawButton(5); // left bumper
 		boolean slowMode = Joystick1.getRawButton(6); // right bumper
 		boolean ShooterOn = Joystick2.getRawButton(2); // B button
@@ -409,11 +405,13 @@ public class Robot extends IterativeRobot {
 		boolean ForkliftDown = Joystick1.getRawButton(3); // X button
 		boolean idle = Joystick1.getRawButton(4); // Y button
 		boolean inverse = Joystick1.getRawButton(9); // left joystick button
-		if (speed < 0 && inverse) {
-			turn = -turn;
+		if (orientRobotSpeed < 0 && inverse) {
+			orientRobotTurn = -orientRobotTurn;
 		}
-		double leftSpeed = speed - turn;
-		double rightSpeed = speed + turn;
+		
+		
+		double leftSpeed = orientRobotSpeed - orientRobotTurn;
+		double rightSpeed = orientRobotSpeed + orientRobotTurn;
 		if (VTEC) {
 			SmartDashboard.putString("VTEC", "Just Kicked in Yo");
 		} else if (slowMode) {
